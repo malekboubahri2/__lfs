@@ -45,3 +45,6 @@ Backup*
 
 # IAR .dep files
 *.dep
+
+#Browse infos
+EWARM/__fs/BrowseInfo/
