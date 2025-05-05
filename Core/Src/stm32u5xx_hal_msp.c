@@ -68,13 +68,57 @@ void HAL_MspInit(void)
   /* USER CODE END MspInit 0 */
 
   __HAL_RCC_PWR_CLK_ENABLE();
-  HAL_PWREx_EnableVddIO2();
 
   /* System interrupt init*/
 
   /* USER CODE BEGIN MspInit 1 */
 
   /* USER CODE END MspInit 1 */
+}
+
+/**
+  * @brief DCACHE MSP Initialization
+  * This function configures the hardware resources used in this example
+  * @param hdcache: DCACHE handle pointer
+  * @retval None
+  */
+void HAL_DCACHE_MspInit(DCACHE_HandleTypeDef* hdcache)
+{
+  if(hdcache->Instance==DCACHE1)
+  {
+    /* USER CODE BEGIN DCACHE1_MspInit 0 */
+
+    /* USER CODE END DCACHE1_MspInit 0 */
+    /* Peripheral clock enable */
+    __HAL_RCC_DCACHE1_CLK_ENABLE();
+    /* USER CODE BEGIN DCACHE1_MspInit 1 */
+
+    /* USER CODE END DCACHE1_MspInit 1 */
+
+  }
+
+}
+
+/**
+  * @brief DCACHE MSP De-Initialization
+  * This function freeze the hardware resources used in this example
+  * @param hdcache: DCACHE handle pointer
+  * @retval None
+  */
+void HAL_DCACHE_MspDeInit(DCACHE_HandleTypeDef* hdcache)
+{
+  if(hdcache->Instance==DCACHE1)
+  {
+    /* USER CODE BEGIN DCACHE1_MspDeInit 0 */
+
+    /* USER CODE END DCACHE1_MspDeInit 0 */
+    /* Peripheral clock disable */
+    __HAL_RCC_DCACHE1_CLK_DISABLE();
+    /* USER CODE BEGIN DCACHE1_MspDeInit 1 */
+
+    /* USER CODE END DCACHE1_MspDeInit 1 */
+  }
+
 }
 
 /**
@@ -85,7 +129,6 @@ void HAL_MspInit(void)
   */
 void HAL_OSPI_MspInit(OSPI_HandleTypeDef* hospi)
 {
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
   RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
   if(hospi->Instance==OCTOSPI2)
   {
@@ -105,51 +148,6 @@ void HAL_OSPI_MspInit(OSPI_HandleTypeDef* hospi)
     /* Peripheral clock enable */
     __HAL_RCC_OSPIM_CLK_ENABLE();
     __HAL_RCC_OSPI2_CLK_ENABLE();
-
-    __HAL_RCC_GPIOI_CLK_ENABLE();
-    __HAL_RCC_GPIOG_CLK_ENABLE();
-    __HAL_RCC_GPIOH_CLK_ENABLE();
-    /**OCTOSPI2 GPIO Configuration
-    PI6     ------> OCTOSPIM_P2_CLK
-    PG15     ------> OCTOSPIM_P2_DQS
-    PG9     ------> OCTOSPIM_P2_IO6
-    PI1     ------> OCTOSPIM_P2_IO2
-    PI5     ------> OCTOSPIM_P2_NCS
-    PH12     ------> OCTOSPIM_P2_IO7
-    PH10     ------> OCTOSPIM_P2_IO5
-    PI3     ------> OCTOSPIM_P2_IO0
-    PI2     ------> OCTOSPIM_P2_IO1
-    PH8     ------> OCTOSPIM_P2_IO3
-    PH9     ------> OCTOSPIM_P2_IO4
-    */
-    GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_5;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF5_OCTOSPI2;
-    HAL_GPIO_Init(GPIOI, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = GPIO_PIN_15|GPIO_PIN_9;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF5_OCTOSPI2;
-    HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_3|GPIO_PIN_2;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF6_OCTOSPI2;
-    HAL_GPIO_Init(GPIOI, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_10|GPIO_PIN_8|GPIO_PIN_9;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF5_OCTOSPI2;
-    HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
-
     /* USER CODE BEGIN OCTOSPI2_MspInit 1 */
 
     /* USER CODE END OCTOSPI2_MspInit 1 */
@@ -174,27 +172,6 @@ void HAL_OSPI_MspDeInit(OSPI_HandleTypeDef* hospi)
     /* Peripheral clock disable */
     __HAL_RCC_OSPIM_CLK_DISABLE();
     __HAL_RCC_OSPI2_CLK_DISABLE();
-
-    /**OCTOSPI2 GPIO Configuration
-    PI6     ------> OCTOSPIM_P2_CLK
-    PG15     ------> OCTOSPIM_P2_DQS
-    PG9     ------> OCTOSPIM_P2_IO6
-    PI1     ------> OCTOSPIM_P2_IO2
-    PI5     ------> OCTOSPIM_P2_NCS
-    PH12     ------> OCTOSPIM_P2_IO7
-    PH10     ------> OCTOSPIM_P2_IO5
-    PI3     ------> OCTOSPIM_P2_IO0
-    PI2     ------> OCTOSPIM_P2_IO1
-    PH8     ------> OCTOSPIM_P2_IO3
-    PH9     ------> OCTOSPIM_P2_IO4
-    */
-    HAL_GPIO_DeInit(GPIOI, GPIO_PIN_6|GPIO_PIN_1|GPIO_PIN_5|GPIO_PIN_3
-                          |GPIO_PIN_2);
-
-    HAL_GPIO_DeInit(GPIOG, GPIO_PIN_15|GPIO_PIN_9);
-
-    HAL_GPIO_DeInit(GPIOH, GPIO_PIN_12|GPIO_PIN_10|GPIO_PIN_8|GPIO_PIN_9);
-
     /* USER CODE BEGIN OCTOSPI2_MspDeInit 1 */
 
     /* USER CODE END OCTOSPI2_MspDeInit 1 */

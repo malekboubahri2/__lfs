@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "b_u585i_iot02a_ospi.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -31,7 +31,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define BUFFER_SIZE         ((uint32_t) 0x1000)
+#define OPI_START_ADDRESS   7*MX25LM51245G_SECTOR_64K
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -41,15 +42,23 @@
 
 /* Private variables ---------------------------------------------------------*/
 
+DCACHE_HandleTypeDef hdcache1;
+
 OSPI_HandleTypeDef hospi2;
 
 /* USER CODE BEGIN PV */
+BSP_OSPI_NOR_Init_t Flash;
+static BSP_OSPI_NOR_Info_t pOSPI_Info;
 
+uint8_t ospi_aTxBuffer[BUFFER_SIZE];
+uint8_t ospi_aRxBuffer[BUFFER_SIZE];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-static void MX_GPIO_Init(void);
+static void SystemPower_Config(void);
+static void MX_DCACHE1_Init(void);
+static void MX_ICACHE_Init(void);
 static void MX_OCTOSPI2_Init(void);
 /* USER CODE BEGIN PFP */
 
@@ -68,7 +77,8 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  Flash.InterfaceMode = BSP_OSPI_NOR_OPI_MODE;
+  Flash.TransferRate  = BSP_OSPI_NOR_STR_TRANSFER;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -83,15 +93,53 @@ int main(void)
   /* Configure the system clock */
   SystemClock_Config();
 
+  /* Configure the System Power */
+  SystemPower_Config();
+
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  MX_GPIO_Init();
+  MX_DCACHE1_Init();
+  MX_ICACHE_Init();
   MX_OCTOSPI2_Init();
   /* USER CODE BEGIN 2 */
+  /* Initialize the structure */
+  pOSPI_Info.FlashSize          = (uint32_t)0x00;
+  pOSPI_Info.EraseSectorSize    = (uint32_t)0x00;
+  pOSPI_Info.EraseSectorsNumber = (uint32_t)0x00;
+  pOSPI_Info.ProgPageSize       = (uint32_t)0x00;
+  pOSPI_Info.ProgPagesNumber    = (uint32_t)0x00;
 
+  /* Read the OSPI memory info */
+  if(BSP_OSPI_NOR_GetInfo(0, &pOSPI_Info) != BSP_ERROR_NONE)
+  {
+    printf("TEST Get INFO : FAILED\n");
+  }
+  /* Test the correctness */
+  else if((pOSPI_Info.FlashSize != 0x4000000) || (pOSPI_Info.EraseSectorSize != 0x10000)  ||
+          (pOSPI_Info.ProgPageSize != 0x100)  || (pOSPI_Info.EraseSectorsNumber != 0x400) ||
+          (pOSPI_Info.ProgPagesNumber != 262144))
+  {
+    printf("OSPI GET INFO : FAILED.\n");
+    printf("OSPI Example Aborted.\n");
+  }
+  
+  if (BSP_OSPI_NOR_Init(0, &Flash) != BSP_ERROR_NONE)
+    {
+      printf("INIT : FAILED.\n");
+    }
+  
+  if(BSP_OSPI_NOR_Write(0, ospi_aTxBuffer, OPI_START_ADDRESS + BUFFER_SIZE, BUFFER_SIZE) != BSP_ERROR_NONE)
+    {
+      printf("WRITE : FAILED.\n");
+    }
+
+  if(BSP_OSPI_NOR_Read(0, ospi_aRxBuffer, OPI_START_ADDRESS + BUFFER_SIZE, BUFFER_SIZE) != BSP_ERROR_NONE)
+    {
+      printf("Read : FAILED.\n");
+    }
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -160,6 +208,83 @@ void SystemClock_Config(void)
 }
 
 /**
+  * @brief Power Configuration
+  * @retval None
+  */
+static void SystemPower_Config(void)
+{
+
+  /*
+   * Switch to SMPS regulator instead of LDO
+   */
+  if (HAL_PWREx_ConfigSupply(PWR_SMPS_SUPPLY) != HAL_OK)
+  {
+    Error_Handler();
+  }
+/* USER CODE BEGIN PWR */
+/* USER CODE END PWR */
+}
+
+/**
+  * @brief DCACHE1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_DCACHE1_Init(void)
+{
+
+  /* USER CODE BEGIN DCACHE1_Init 0 */
+
+  /* USER CODE END DCACHE1_Init 0 */
+
+  /* USER CODE BEGIN DCACHE1_Init 1 */
+
+  /* USER CODE END DCACHE1_Init 1 */
+  hdcache1.Instance = DCACHE1;
+  hdcache1.Init.ReadBurstType = DCACHE_READ_BURST_WRAP;
+  if (HAL_DCACHE_Init(&hdcache1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN DCACHE1_Init 2 */
+
+  /* USER CODE END DCACHE1_Init 2 */
+
+}
+
+/**
+  * @brief ICACHE Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ICACHE_Init(void)
+{
+
+  /* USER CODE BEGIN ICACHE_Init 0 */
+
+  /* USER CODE END ICACHE_Init 0 */
+
+  /* USER CODE BEGIN ICACHE_Init 1 */
+
+  /* USER CODE END ICACHE_Init 1 */
+
+  /** Enable instruction cache in 1-way (direct mapped cache)
+  */
+  if (HAL_ICACHE_ConfigAssociativityMode(ICACHE_1WAY) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_ICACHE_Enable() != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ICACHE_Init 2 */
+
+  /* USER CODE END ICACHE_Init 2 */
+
+}
+
+/**
   * @brief OCTOSPI2 Initialization Function
   * @param None
   * @retval None
@@ -171,7 +296,6 @@ static void MX_OCTOSPI2_Init(void)
 
   /* USER CODE END OCTOSPI2_Init 0 */
 
-  OSPIM_CfgTypeDef sOspiManagerCfg = {0};
   HAL_OSPI_DLYB_CfgTypeDef HAL_OSPI_DLYB_Cfg_Struct = {0};
 
   /* USER CODE BEGIN OCTOSPI2_Init 1 */
@@ -181,7 +305,7 @@ static void MX_OCTOSPI2_Init(void)
   hospi2.Instance = OCTOSPI2;
   hospi2.Init.FifoThreshold = 1;
   hospi2.Init.DualQuad = HAL_OSPI_DUALQUAD_DISABLE;
-  hospi2.Init.MemoryType = HAL_OSPI_MEMTYPE_MACRONIX;
+  hospi2.Init.MemoryType = HAL_OSPI_MEMTYPE_MICRON;
   hospi2.Init.DeviceSize = 32;
   hospi2.Init.ChipSelectHighTime = 1;
   hospi2.Init.FreeRunningClock = HAL_OSPI_FREERUNCLK_DISABLE;
@@ -198,15 +322,6 @@ static void MX_OCTOSPI2_Init(void)
   {
     Error_Handler();
   }
-  sOspiManagerCfg.ClkPort = 2;
-  sOspiManagerCfg.DQSPort = 2;
-  sOspiManagerCfg.NCSPort = 2;
-  sOspiManagerCfg.IOLowPort = HAL_OSPIM_IOPORT_2_LOW;
-  sOspiManagerCfg.IOHighPort = HAL_OSPIM_IOPORT_2_HIGH;
-  if (HAL_OSPIM_Config(&hospi2, &sOspiManagerCfg, HAL_OSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
-  {
-    Error_Handler();
-  }
   HAL_OSPI_DLYB_Cfg_Struct.Units = 0;
   HAL_OSPI_DLYB_Cfg_Struct.PhaseSel = 0;
   if (HAL_OSPI_DLYB_SetConfig(&hospi2, &HAL_OSPI_DLYB_Cfg_Struct) != HAL_OK)
@@ -217,27 +332,6 @@ static void MX_OCTOSPI2_Init(void)
 
   /* USER CODE END OCTOSPI2_Init 2 */
 
-}
-
-/**
-  * @brief GPIO Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_GPIO_Init(void)
-{
-  /* USER CODE BEGIN MX_GPIO_Init_1 */
-
-  /* USER CODE END MX_GPIO_Init_1 */
-
-  /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOI_CLK_ENABLE();
-  __HAL_RCC_GPIOG_CLK_ENABLE();
-  __HAL_RCC_GPIOH_CLK_ENABLE();
-
-  /* USER CODE BEGIN MX_GPIO_Init_2 */
-
-  /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
